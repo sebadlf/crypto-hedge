@@ -1,3 +1,13 @@
+db.py
+keys.py
+
+files/
+
+.DS_STORE
+.settings
+.vscode/
+.idea/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
