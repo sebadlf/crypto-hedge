@@ -85,14 +85,40 @@ def dato_historico_download(moneda1, moneda2, desde=None, hasta=None, granularit
 
     return df
 
-    #return DF (Nombre de las columnas: time,open,high,low,close,volume) Ordenada de menor a mayor por time.
-    #El desde hasta de la función histórica, debe contemplar rangos mayores al mínimo que de la API.
+def dato_actual(moneda1, moneda2="USDT"):
+    data = dato_actual_download(moneda1, moneda2, size=1)
 
-#def dato_actual(Moneda1=string, Moneda2=string):
-    #return TUPLA(ask_PAR, bid_PAR)
+    ask = float(data['asks'][0][1]) if len(data['asks']) else None
+    bid = float(data['bids'][0][1]) if len(data['bids']) else None
+
+    return (ask, bid)
 
 
-desde = datetime(2020, 11, 11, 0, 0, 0)
-hasta = datetime(2020, 11, 14, 0, 0, 0)
+def dato_actual_download(moneda1, moneda2="USDT", size = None, depth= None):
+    url = f'https://okex.com/api/spot/v3/instruments/{moneda1}-{moneda2}/book'
 
-print(dato_historico("BTC", "USDT", desde, hasta, timeframe="1m"))
+    params = {}
+
+    if size:
+        params['size'] = size
+
+    if depth:
+        params['depth'] = size
+
+    r = requests.get(url, params=params)
+    js = r.json()
+
+    return js # TUPLA(ask_PAR, bid_PAR)
+
+
+# Test dato_historico
+
+# desde = datetime(2020, 11, 11, 0, 0, 0)
+# hasta = datetime(2020, 11, 14, 0, 0, 0)
+#
+# print(dato_historico("BTC", "USDT", desde, hasta, timeframe="1m"))
+
+
+# Test dato_actual
+
+#print(dato_actual('BTC', 'USDT'))
