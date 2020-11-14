@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetime', hasta='datetime', limit=1000):
     '''desde=datetime.fromisoformat('2020-11-05') #YYYY-MM-DD
         hasta=datetime.fromisoformat('2020-11-09') # No es inclusive.
-        data=bajadaSimple(moneda1='BTC', moneda2='USDT',interval='1m',desde=desde,hasta=hasta)'''
+        data=dato_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde=desde,hasta=hasta)'''
 
     
     #Creo la variable Symbol
@@ -28,6 +28,7 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetim
     #Llevo las variables Datetime a ms
     startTime=int(desde.timestamp()*1000)
     endTime=int(hasta.timestamp()*1000)
+    #Inicializo los df
     df_acum=pd.DataFrame(columns=('openTime', 'open', 'high', 'low', 'close', 'volume', 'cTime',
        'qVolume', 'trades', 'takerBase', 'takerQuote', 'Ignore'))
     df=pd.DataFrame(columns=('openTime', 'open', 'high', 'low', 'close', 'volume', 'cTime',
@@ -52,6 +53,7 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetim
         
         if js==[]:
             print('Fechas no Validas')
+            finished=True
             
         # Armo el dataframe
         cols = ['openTime','open','high','low','close','volume','cTime',
@@ -62,10 +64,7 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetim
         
         if (ultimaFecha>=endTime):
             finished=True
-            
-
-
-    
+              
     #Convierto los valores strings a numeros
     df_acum = df_acum.apply(pd.to_numeric)
    
@@ -83,6 +82,9 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetim
     df_acum.index = pd.to_datetime(df_acum.time, unit='ms')
     
     return df_acum
+
+
+
 
 def dato_actual(moneda1='BTC', moneda2='USDT'):
     '''data=dato_actual(moneda1='BTC', moneda2='USDT')'''
