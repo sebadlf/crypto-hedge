@@ -5,39 +5,28 @@ from sqlalchemy import create_engine
 engine = create_engine(BD_CONNECTION)
 from datetime import datetime, timedelta
 
-def dato_historico(moneda1, moneda2, desde=None, hasta=None, timeframe="1m"):
+def dato_historico(moneda1, moneda2, desde, hasta=None, timeframe="1m"):
     MAX_WINDOW = 300
 
     time_window = timedelta(minutes=MAX_WINDOW)
-    time_unit = timedelta(minutes=1)
     granularity = 60
 
     if timeframe == "1d":
         granularity = 86400
         time_window = timedelta(days=MAX_WINDOW)
-        time_unit = timedelta(days=1)
     elif timeframe == "1h":
         granularity = 3600
         time_window = timedelta(hours=MAX_WINDOW)
-        time_unit = timedelta(hours=1)
-
-    if desde and (hasta is None):
-        hasta = desde + time_window - time_unit
-
-    if (desde is None) and hasta:
-        desde = hasta - time_window + time_unit
-
-    if (desde is None) and (hasta is None):
-        return dato_historico_download(moneda1, moneda2, desde, hasta, granularity)
 
     finish = False
 
     result = []
 
     while not finish:
-        hasta_param = desde + time_window - time_unit
 
-        if (hasta_param > hasta):
+        hasta_param = desde + time_window
+
+        if hasta_param > hasta:
             hasta_param = hasta
             finish = True
 
@@ -46,6 +35,8 @@ def dato_historico(moneda1, moneda2, desde=None, hasta=None, timeframe="1m"):
         result.append(partial_df)
 
         desde = desde + time_window
+
+        finish = finish or (desde >= hasta) or (desde > datetime.utcnow())
 
     df = pd.concat(result)
 
@@ -122,3 +113,25 @@ def dato_actual_download(moneda1, moneda2="USDT", size = None, depth= None):
 # Test dato_actual
 
 #print(dato_actual('BTC', 'USDT'))
+
+
+def crear_tabla(db_connection):
+    create_table = '''
+    
+    CREATE TABLE IF NOT EXISTS `okex` (
+      `id` int(11) NOT NULL AUTO_INCREMENT,
+      `ticker` varchar(20) DEFAULT '',
+      `time` timestamp NULL DEFAULT NULL,
+      `open` double DEFAULT NULL,
+      `high` double DEFAULT NULL,
+      `low` double DEFAULT NULL,
+      `close` double DEFAULT NULL,
+      `volume` double DEFAULT NULL,
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `idx_ticker_time` (`ticker`,`time`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+    '''
+
+    db_connection.execute(create_table)
+
+
