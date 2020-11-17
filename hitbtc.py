@@ -11,6 +11,7 @@ RATE LIMIT
 @author: nicopacheco121
 """
 
+from sqlalchemy import create_engine
 import requests
 import pandas as pd
 import pytz
@@ -18,10 +19,14 @@ from  keys import *
 from datetime import datetime, timedelta
 import time
 import logging
+import db
+import okex_utils
+import config
 
 
 
-def datos(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde= '2020-11-12', hasta='2020-11-15',limit='1000'):
+
+def dato_historico(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde= '2020-11-12', hasta='2020-11-15',limit='1000'):
 
     """
     Inputs
@@ -30,8 +35,30 @@ def datos(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde= '2020-11
     Desde y hasta: string YYYY-MM-DD
 
     """
-
     start_time = time.time()
+
+    # conexion a la DB
+    db_connection = create_engine(db.BD_CONNECTION)
+    conn = db_connection.connect()
+
+    # creo la tabla
+    create_table = '''
+
+    CREATE TABLE IF NOT EXISTS `hitbtc` (
+      `id` int(11) NOT NULL AUTO_INCREMENT,
+      `ticker` varchar(20) DEFAULT '',
+      `time` timestamp NULL DEFAULT NULL,
+      `open` float(10) DEFAULT NULL,
+      `high` float(10) DEFAULT NULL,
+      `low` float(10) DEFAULT NULL,
+      `close` float(10) DEFAULT NULL,
+      `volume` float(10) DEFAULT NULL,
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `idx_ticker_time` (`ticker`,`time`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+    '''
+
+    db_connection.execute(create_table)
 
     logging.basicConfig(level=logging.INFO, format='{asctime} {levelname} ({threadName:11s}) {message}', style='{')
 
@@ -41,8 +68,8 @@ def datos(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde= '2020-11
     symbol = moneda1 + moneda2
 
     # presumo que las fechas son UTC0
-    desde = datetime.fromisoformat(desde)
-    hasta = datetime.fromisoformat(hasta)
+    #desde = datetime.fromisoformat(desde)
+    #hasta = datetime.fromisoformat(hasta)
     desde = desde.replace(tzinfo=pytz.utc)
     hasta = hasta.replace(tzinfo=pytz.utc)
 
@@ -99,8 +126,14 @@ def datos(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde= '2020-11
     # Renombro las columnas segun lo acordado.
     df_acum.columns = ['time', 'open','close', 'low', 'high', 'volume']
 
+    # Agrego columna ticker.
+    df_acum['ticker'] = moneda1
+
     # Ordeno columnas segun lo acordado.
-    df_acum = df_acum[['time', 'open', 'high', 'low', 'close', 'volume']]
+    df_acum = df_acum[['ticker','time', 'open', 'high', 'low', 'close', 'volume']]
+
+    # Borro algún posible duplicado
+    df_acum = df_acum.drop_duplicates(['time'], keep='last')
 
     # Paso a timestamp el time
     df_acum['time'] = pd.to_datetime(df_acum.time)
@@ -110,6 +143,9 @@ def datos(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde= '2020-11
 
     # Le mando indice de time
     df_acum.set_index('time',inplace=True)
+
+    df_acum.to_sql(con=db_connection, name='hitbtc', if_exists='append')
+
 
     print("--- %s seconds ---" % (time.time() - start_time))
 
@@ -131,9 +167,18 @@ def dato_actual(moneda1='BTC', moneda2='USD'):
     bid_PAR=js['bid']
     return (ask_PAR,bid_PAR)
 
+""" / / / EJECUTAR LA FUNCION / / / """
+
+desde = datetime.utcnow() - timedelta(weeks=1)
+hasta = datetime.utcnow()
+
+
+for ticker in config.TICKERS:
+
+    dato_historico(moneda1=ticker,desde=desde,hasta=hasta)
+
 
 #print(dato_actual("BTC","USDT"))
-
 
 
 
