@@ -37,11 +37,11 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetim
         hasta = datetime.now()
         hasta = hasta.replace(tzinfo=pytz.utc)
     else:
-        hasta = datetime.fromisoformat(hasta)
+        #hasta = datetime.fromisoformat(hasta)
         hasta = hasta.replace(tzinfo=pytz.utc)
 
 
-    desde = datetime.fromisoformat(desde)
+    #desde = datetime.fromisoformat(desde)
     desde = desde.replace(tzinfo=pytz.utc)
 
     # Llevo las variables Datetime a ms
@@ -101,7 +101,10 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetim
 
     return df_acum
 
-#ver = dato_historico('BTC','USDT',desde='2020-11-15')
+#desde = datetime.utcnow() - timedelta(weeks=2)
+#print(desde)
+
+#ver = dato_historico('BTC','USDT',desde=desde)
 #print(ver)
 
 
