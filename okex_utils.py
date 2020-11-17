@@ -36,7 +36,7 @@ def dato_historico(moneda1, moneda2, desde, hasta=None, timeframe="1m"):
 
         desde = desde + time_window
 
-        finish = finish or (desde >= hasta) or (desde > datetime.utcnow())
+        finish = finish or (desde >= hasta) or (desde >= datetime.utcnow())
 
     df = pd.concat(result)
 
@@ -55,6 +55,8 @@ def dato_historico_download(moneda1, moneda2, desde=None, hasta=None, granularit
 
     if hasta:
         params['start'] = hasta.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+
+    print(params)
 
     r = requests.get(url, params=params)
     js = r.json()

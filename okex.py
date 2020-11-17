@@ -20,13 +20,16 @@ for ticker in TICKERS:
         last_row = get_last_row(conn=db_connection, table_name='okex', ticker=ticker)
 
         if last_row.get('id'):
-            delete_last_row(conn=db_connection, table_name='okex', id=last_row['id'])
+            res = delete_last_row(conn=db_connection, table_name='okex', id=last_row['id'])
+            #print(res)
 
         since = last_row.get('time') if last_row.get('time') else FIRST_ROW_DATE
 
-        to = since + timedelta(minutes=3000)
+        to = since + timedelta(minutes=2999)
 
         df = dato_historico(ticker, 'USDT', desde=since, hasta=to, timeframe="1m")
+
+        #print('append')
 
         df.to_sql('okex', db_connection, if_exists='append')
 
