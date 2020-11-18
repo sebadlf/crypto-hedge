@@ -36,6 +36,8 @@ def dato_historico(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde=
 
     """
     start_time = time.time()
+    logging.basicConfig(level=logging.INFO, format='{asctime} {levelname} ({threadName:11s}) {message}', style='{')
+    print(f'Ticker {moneda1}')
 
     # conexion a la DB
     db_connection = create_engine(db.BD_CONNECTION)
@@ -60,11 +62,10 @@ def dato_historico(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde=
 
     db_connection.execute(create_table)
 
-    logging.basicConfig(level=logging.INFO, format='{asctime} {levelname} ({threadName:11s}) {message}', style='{')
-
     # Creo la variable Symbol
-    if moneda2 == "USDT":
-        moneda2 = "USD"
+    if moneda2 == 'USDT' and moneda1 != 'XRP':
+        moneda2 = 'USD'
+
     symbol = moneda1 + moneda2
 
     # presumo que las fechas son UTC0
@@ -96,8 +97,18 @@ def dato_historico(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde=
         r = requests.get(url, params=params)
         js = r.json()
 
+        if js==[]:
+            print(f'Problema con {moneda1}')
+            finished=True
+
         # Armo el dataframe
         df = pd.DataFrame(js)
+
+        # Verifico que traigo mas de una fila y es algo nuevo, si no, le doy break
+        if len(df) ==1:
+            if df.iloc[0][0] == df_acum.iloc[-1][0]:
+                break
+
         df_acum = df_acum.append(df,sort=False)
 
         # verifico si ya llego a la fecha solicitada
@@ -169,16 +180,22 @@ def dato_actual(moneda1='BTC', moneda2='USD'):
 
 """ / / / EJECUTAR LA FUNCION / / / """
 
-desde = datetime.utcnow() - timedelta(weeks=1)
+desde = datetime.utcnow() - timedelta(weeks=13)
 hasta = datetime.utcnow()
 
 
+
+inicio = time.time()
 for ticker in config.TICKERS:
 
-    dato_historico(moneda1=ticker,desde=desde,hasta=hasta)
 
+    dato_historico(moneda1=ticker,desde=desde,hasta=hasta,moneda2='USDT')
+
+print("--- %s seconds ---" % (time.time() - inicio))
 
 #print(dato_actual("BTC","USDT"))
+
+
 
 
 
