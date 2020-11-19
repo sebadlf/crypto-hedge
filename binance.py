@@ -11,7 +11,7 @@ import pytz
 from  keys import *
 from datetime import datetime, timedelta
 from sqlalchemy import create_engine
-
+import db
 
 def GuardoDB(data,ticker):
     # conexion a la DB
@@ -35,9 +35,9 @@ def GuardoDB(data,ticker):
         '''
 
     db_connection.execute(create_table)
+       
     
-
-    data.to_sql(con=db_connection, name='bitfinex', if_exists='append')
+    data.to_sql(con=db_connection, name='binance', if_exists='append')
     
 def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetime', hasta='datetime', limit=1000):
     '''desde=datetime.fromisoformat('2020-11-05') #YYYY-MM-DD
@@ -110,6 +110,10 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetim
     # Agrego columna ticker.
     df_acum['ticker'] = moneda1
     
+    #Elimino la columna time, no la clave.
+    df_acum.drop(['time'],axis=1,inplace=True)
+    df_acum.drop_duplicates(inplace=True)
+    
     #Guardo en DB
     GuardoDB(df_acum,moneda1)
     
@@ -132,6 +136,8 @@ def dato_actual(moneda1='BTC', moneda2='USDT'):
     return (ask_PAR,bid_PAR)
 
 
-
+desde=datetime.fromisoformat('2020-11-05') #YYYY-MM-DD
+hasta=datetime.fromisoformat('2020-11-09') # No es inclusive.
+data=dato_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde=desde,hasta=hasta)
     
     
