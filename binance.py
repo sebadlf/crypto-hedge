@@ -10,6 +10,7 @@ import pandas as pd
 import pytz
 from  keys import *
 from datetime import datetime, timedelta
+from sqlalchemy import create_engine
 
 
 def GuardoDB(data,ticker):
