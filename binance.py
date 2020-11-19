@@ -12,7 +12,32 @@ from  keys import *
 from datetime import datetime, timedelta
 
 
+def GuardoDB(data,ticker):
+    # conexion a la DB
+    db_connection = create_engine(db.BD_CONNECTION)
+    conn = db_connection.connect()
 
+    # creo la tabla
+    create_table = '''
+        CREATE TABLE IF NOT EXISTS `binance` (
+          `id` int(11) NOT NULL AUTO_INCREMENT,
+          `ticker` varchar(20) DEFAULT '',
+          `time` timestamp NULL DEFAULT NULL,
+          `open` float(10) DEFAULT NULL,
+          `high` float(10) DEFAULT NULL,
+          `low` float(10) DEFAULT NULL,
+          `close` float(10) DEFAULT NULL,
+          `volume` float(10) DEFAULT NULL,
+          PRIMARY KEY (`id`),
+          UNIQUE KEY `idx_ticker_time` (`ticker`,`time`)
+        ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+        '''
+
+    db_connection.execute(create_table)
+    
+
+    data.to_sql(con=db_connection, name='bitfinex', if_exists='append')
+    
 def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetime', hasta='datetime', limit=1000):
     '''desde=datetime.fromisoformat('2020-11-05') #YYYY-MM-DD
         hasta=datetime.fromisoformat('2020-11-09') # No es inclusive.
@@ -80,6 +105,12 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetim
     
     # Le mando indice de time
     df_acum.index = pd.to_datetime(df_acum.time, unit='ms')
+
+    # Agrego columna ticker.
+    df_acum['ticker'] = moneda1
+    
+    #Guardo en DB
+    GuardoDB(df_acum,moneda1)
     
     return df_acum
 
@@ -100,3 +131,6 @@ def dato_actual(moneda1='BTC', moneda2='USDT'):
     return (ask_PAR,bid_PAR)
 
 
+
+    
+    
