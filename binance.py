@@ -39,6 +39,8 @@ def GuardoDB(data,ticker):
     
     data.to_sql(con=db_connection, name='binance', if_exists='append')
     
+    
+    
 def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetime', hasta='datetime', limit=1000):
     '''desde=datetime.fromisoformat('2020-11-05') #YYYY-MM-DD
         hasta=datetime.fromisoformat('2020-11-09') # No es inclusive.
@@ -114,9 +116,6 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetim
     df_acum.drop(['time'],axis=1,inplace=True)
     df_acum.drop_duplicates(inplace=True)
     
-    #Guardo en DB
-    GuardoDB(df_acum,moneda1)
-    
     return df_acum
 
 
@@ -136,8 +135,37 @@ def dato_actual(moneda1='BTC', moneda2='USDT'):
     return (ask_PAR,bid_PAR)
 
 
+def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datetime', hasta='datetime'):
+    
+    try:
+        # conexion a la DB
+        db_connection = create_engine(db.BD_CONNECTION)
+        conn = db_connection.connect()
+    
+        #Busco el ultimo dato guardado.
+        busquedaUltimaFecha = f'SELECT `id`,`time` FROM binance WHERE `ticker` = "{moneda1}" ORDER BY `time` DESC limit 0,1'
+        ultimaFecha = db_connection.execute(busquedaUltimaFecha).fetchone()
+    
+        #Si encuentro un ultimo registro, lo elimino
+        if (ultimaFecha):
+            id = ultimaFecha[0]
+            query_borrado = f'DELETE FROM binance WHERE `id`={id}'
+            db_connection.execute(query_borrado)
+            desde=ultimaFecha[1]
+    except:
+        pass
+    
+    #Bajo Informacion.
+    data=dato_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde=desde,hasta=hasta)
+    
+    #Guardo en DB
+    GuardoDB(data,moneda1)
+            
+    
+   
 desde=datetime.fromisoformat('2020-11-05') #YYYY-MM-DD
-hasta=datetime.fromisoformat('2020-11-09') # No es inclusive.
-data=dato_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde=desde,hasta=hasta)
-    
-    
+hasta=datetime.fromisoformat('2020-11-09') #YYYY-MM-DD 
+
+data=guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde=desde,hasta=hasta)
+
+  
