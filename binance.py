@@ -166,6 +166,6 @@ def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datet
 desde=datetime.fromisoformat('2020-11-05') #YYYY-MM-DD
 hasta=datetime.fromisoformat('2020-11-09') #YYYY-MM-DD 
 
-data=guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde=desde,hasta=hasta)
+guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde=desde,hasta=hasta)
 
   
