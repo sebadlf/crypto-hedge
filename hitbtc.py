@@ -24,14 +24,14 @@ import okex_utils
 import config
 
 
-def GuardoDB(data,ticker):
+def GuardoDB(data,ticker,broker='hitbtc'):
     # conexion a la DB
     db_connection = create_engine(db.BD_CONNECTION)
     conn = db_connection.connect()
 
     # creo la tabla
-    create_table = '''
-        CREATE TABLE IF NOT EXISTS `binance` (
+    create_table = f'''
+        CREATE TABLE IF NOT EXISTS `{broker}` (
           `id` int(11) NOT NULL AUTO_INCREMENT,
           `ticker` varchar(20) DEFAULT '',
           `time` timestamp NULL DEFAULT NULL,
@@ -48,7 +48,7 @@ def GuardoDB(data,ticker):
     db_connection.execute(create_table)
        
     
-    data.to_sql(con=db_connection, name='binance', if_exists='append')
+    data.to_sql(con=db_connection, name=broker, if_exists='append')
     
 
 def dato_historico(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde= '2020-11-12', hasta='2020-11-15',limit='1000'):
