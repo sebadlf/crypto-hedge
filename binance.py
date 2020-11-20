@@ -135,7 +135,7 @@ def dato_actual(moneda1='BTC', moneda2='USDT'):
     return (ask_PAR,bid_PAR)
 
 
-def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datetime', hasta='datetime'):
+def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datetime', hasta='datetime',broker='binance'):
     
     try:
         # conexion a la DB
@@ -143,20 +143,20 @@ def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datet
         conn = db_connection.connect()
     
         #Busco el ultimo dato guardado.
-        busquedaUltimaFecha = f'SELECT `id`,`time` FROM binance WHERE `ticker` = "{moneda1}" ORDER BY `time` DESC limit 0,1'
+        busquedaUltimaFecha = f'SELECT `id`,`time` FROM {broker} WHERE `ticker` = "{moneda1}" ORDER BY `time` DESC limit 0,1'
         ultimaFecha = db_connection.execute(busquedaUltimaFecha).fetchone()
     
         #Si encuentro un ultimo registro, lo elimino
         if (ultimaFecha):
             id = ultimaFecha[0]
-            query_borrado = f'DELETE FROM binance WHERE `id`={id}'
+            query_borrado = f'DELETE FROM {broker} WHERE `id`={id}'
             db_connection.execute(query_borrado)
             desde=ultimaFecha[1]
     except:
         pass
     
     #Bajo Informacion.
-    data=dato_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde=desde,hasta=hasta)
+    data=dato_historico(moneda1=moneda1, moneda2=moneda2,timeframe=timeframe,desde=desde,hasta=hasta)
     
     #Guardo en DB
     GuardoDB(data,moneda1)
