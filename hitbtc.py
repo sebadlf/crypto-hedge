@@ -24,7 +24,32 @@ import okex_utils
 import config
 
 
+def GuardoDB(data,ticker):
+    # conexion a la DB
+    db_connection = create_engine(db.BD_CONNECTION)
+    conn = db_connection.connect()
 
+    # creo la tabla
+    create_table = '''
+        CREATE TABLE IF NOT EXISTS `binance` (
+          `id` int(11) NOT NULL AUTO_INCREMENT,
+          `ticker` varchar(20) DEFAULT '',
+          `time` timestamp NULL DEFAULT NULL,
+          `open` float(10) DEFAULT NULL,
+          `high` float(10) DEFAULT NULL,
+          `low` float(10) DEFAULT NULL,
+          `close` float(10) DEFAULT NULL,
+          `volume` float(10) DEFAULT NULL,
+          PRIMARY KEY (`id`),
+          UNIQUE KEY `idx_ticker_time` (`ticker`,`time`)
+        ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+        '''
+
+    db_connection.execute(create_table)
+       
+    
+    data.to_sql(con=db_connection, name='binance', if_exists='append')
+    
 
 def dato_historico(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde= '2020-11-12', hasta='2020-11-15',limit='1000'):
 
@@ -39,28 +64,6 @@ def dato_historico(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde=
     logging.basicConfig(level=logging.INFO, format='{asctime} {levelname} ({threadName:11s}) {message}', style='{')
     print(f'Ticker {moneda1}')
 
-    # conexion a la DB
-    db_connection = create_engine(db.BD_CONNECTION)
-    conn = db_connection.connect()
-
-    # creo la tabla
-    create_table = '''
-
-    CREATE TABLE IF NOT EXISTS `hitbtc` (
-      `id` int(11) NOT NULL AUTO_INCREMENT,
-      `ticker` varchar(20) DEFAULT '',
-      `time` timestamp NULL DEFAULT NULL,
-      `open` float(10) DEFAULT NULL,
-      `high` float(10) DEFAULT NULL,
-      `low` float(10) DEFAULT NULL,
-      `close` float(10) DEFAULT NULL,
-      `volume` float(10) DEFAULT NULL,
-      PRIMARY KEY (`id`),
-      UNIQUE KEY `idx_ticker_time` (`ticker`,`time`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
-    '''
-
-    db_connection.execute(create_table)
 
     # Creo la variable Symbol
     if moneda2 == 'USDT' and moneda1 != 'XRP':
@@ -155,12 +158,37 @@ def dato_historico(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde=
     # Le mando indice de time
     df_acum.set_index('time',inplace=True)
 
-    df_acum.to_sql(con=db_connection, name='hitbtc', if_exists='append')
-
-
     print("--- %s seconds ---" % (time.time() - start_time))
 
     return df_acum
+
+
+def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datetime', hasta='datetime',broker='hitbtc'):
+    
+    try:
+        # conexion a la DB
+        db_connection = create_engine(db.BD_CONNECTION)
+        conn = db_connection.connect()
+    
+        #Busco el ultimo dato guardado.
+        busquedaUltimaFecha = f'SELECT `id`,`time` FROM {broker} WHERE `ticker` = "{moneda1}" ORDER BY `time` DESC limit 0,1'
+        ultimaFecha = db_connection.execute(busquedaUltimaFecha).fetchone()
+    
+        #Si encuentro un ultimo registro, lo elimino
+        if (ultimaFecha):
+            id = ultimaFecha[0]
+            query_borrado = f'DELETE FROM {broker} WHERE `id`={id}'
+            db_connection.execute(query_borrado)
+            desde=ultimaFecha[1]
+    except:
+        pass
+    
+    #Bajo Informacion.
+    data=dato_historico(moneda1=moneda1, moneda2=moneda2,timeframe=timeframe,desde=desde,hasta=hasta)
+    
+    #Guardo en DB
+    GuardoDB(data,moneda1)
+
 
 
 def dato_actual(moneda1='BTC', moneda2='USD'):
@@ -178,6 +206,8 @@ def dato_actual(moneda1='BTC', moneda2='USD'):
     bid_PAR=js['bid']
     return (ask_PAR,bid_PAR)
 
+
+
 """ / / / EJECUTAR LA FUNCION / / / """
 
 desde = datetime.utcnow() - timedelta(weeks=13)
@@ -189,8 +219,8 @@ inicio = time.time()
 for ticker in config.TICKERS:
 
 
-    dato_historico(moneda1=ticker,desde=desde,hasta=hasta,moneda2='USDT')
-
+#    dato_historico(moneda1=ticker,desde=desde,hasta=hasta,moneda2='USDT')
+    guardado_historico(moneda1=ticker,desde=desde,hasta=hasta,moneda2='USDT')
 print("--- %s seconds ---" % (time.time() - inicio))
 
 #print(dato_actual("BTC","USDT"))
