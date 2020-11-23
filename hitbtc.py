@@ -206,6 +206,7 @@ def dato_actual(moneda1='BTC', moneda2='USD'):
     bid_PAR=js['bid']
     return (ask_PAR,bid_PAR)
 
+print(dato_actual())
 
 
 """ / / / EJECUTAR LA FUNCION / / / """
@@ -215,13 +216,13 @@ hasta = datetime.utcnow()
 
 
 
-inicio = time.time()
-for ticker in config.TICKERS:
-
-
-#    dato_historico(moneda1=ticker,desde=desde,hasta=hasta,moneda2='USDT')
-    guardado_historico(moneda1=ticker,desde=desde,hasta=hasta,moneda2='USDT')
-print("--- %s seconds ---" % (time.time() - inicio))
+# inicio = time.time()
+# for ticker in config.TICKERS:
+#
+#
+# #    dato_historico(moneda1=ticker,desde=desde,hasta=hasta,moneda2='USDT')
+#     guardado_historico(moneda1=ticker,desde=desde,hasta=hasta,moneda2='USDT')
+# print("--- %s seconds ---" % (time.time() - inicio))
 
 #print(dato_actual("BTC","USDT"))
 

@@ -173,9 +173,9 @@ def dato_actual(moneda1='BTC', moneda2='USD'):
 desde = datetime.utcnow() - timedelta(weeks=13)
 hasta = datetime.utcnow()
 
-for ticker in config.TICKERS:
-#for ticker in tickers:
-    dato_historico(moneda1=ticker,desde=desde,hasta=hasta)
+# for ticker in config.TICKERS:
+# #for ticker in tickers:
+#     dato_historico(moneda1=ticker,desde=desde,hasta=hasta)
 
 #print(dato_actual("BTC","USDT"))
 
