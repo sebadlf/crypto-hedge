@@ -12,6 +12,9 @@ from  keys import *
 from datetime import datetime, timedelta
 from sqlalchemy import create_engine
 import db
+from dateutil.relativedelta import relativedelta
+#import logging
+
 
 def GuardoDB(data,ticker,broker='binance'):
     # conexion a la DB
@@ -62,7 +65,10 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetim
     df=pd.DataFrame(columns=('openTime', 'open', 'high', 'low', 'close', 'volume', 'cTime',
        'qVolume', 'trades', 'takerBase', 'takerQuote', 'Ignore'))
     
+    #dos banderas que uso para saber que termine.
     finished = False
+    ultimaFechaAnterior=False
+    
     url = 'https://api.binance.com/api/v3/klines'
     while not finished:
        
@@ -71,11 +77,14 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetim
         except:
             ultimaFecha=startTime
         
-        
         #Inicio Bajada
         params = {'symbol':symbol, 'interval':timeframe, 
                   'startTime':ultimaFecha, 'limit':limit}
-
+        
+        #Logueo del Estado pre-Bajada.
+        #logging.info(f'Inicio de Bajada Fecha: {ultimaFecha}')
+        print(f'Inicio de Bajada Fecha: {ultimaFecha}. Tamaño:{df_acum.size}')
+        
         r = requests.get(url, params=params)
         js = r.json()
         
@@ -92,7 +101,15 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetim
         
         if (ultimaFecha>=endTime):
             finished=True
-              
+        if(ultimaFecha==ultimaFechaAnterior):
+            #Cuando se repite la ultima fecha, el ultimo registro tiene el 
+            # mismo opentime, pero cambia el volument
+            finished=True
+            df_acum.drop_duplicates('openTime',inplace=True)
+            
+        else:
+            ultimaFechaAnterior=ultimaFecha
+            
     #Convierto los valores strings a numeros
     df_acum = df_acum.apply(pd.to_numeric)
    
@@ -136,6 +153,14 @@ def dato_actual(moneda1='BTC', moneda2='USDT'):
 
 
 def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datetime', hasta='datetime',broker='binance'):
+    #En caso de no tener fecha de Fin, utilizo el dia actual.
+    if hasta =='datetime':
+        hasta=datetime.utcnow()
+    #En caso de no tener fecha de Inicio, utilizo 6 meses antes.
+    if desde =='datetime':
+        meses=relativedelta(months=6)
+        desde=hasta-meses
+       
     
     try:
         # conexion a la DB
@@ -153,6 +178,7 @@ def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datet
             db_connection.execute(query_borrado)
             desde=ultimaFecha[1]
     except:
+        #Dio un error pq no encontro la tabla, la va a crear dentro de la funcion dato_historico
         pass
     
     #Bajo Informacion.
@@ -163,9 +189,12 @@ def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datet
             
     
    
-desde=datetime.fromisoformat('2020-11-05') #YYYY-MM-DD
-hasta=datetime.fromisoformat('2020-11-09') #YYYY-MM-DD 
+desde=datetime.fromisoformat('2019-11-01') #YYYY-MM-DD
+hasta=datetime.fromisoformat('2019-11-02') #YYYY-MM-DD 
 
+#Prueba con Fecha de inicio y Fin.
 #guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde=desde,hasta=hasta)
 
+#Prueba con Fecha de inicio o Fin.
+#guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m')
   
