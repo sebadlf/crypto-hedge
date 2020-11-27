@@ -161,7 +161,7 @@ def dato_actual(moneda1='BTC', moneda2='USD'):
     #r = requests.get(url,params=params)
     r = requests.get(url)
     js = r.json()
-    print(js)
+    #print(js)
     ask_PAR=js[2]
     bid_PAR=js[0]
     return (ask_PAR,bid_PAR)
