@@ -102,8 +102,8 @@ def dato_actual_download(moneda1, moneda2="USDT", size = None, depth= None):
 
     return js # TUPLA(ask_PAR, bid_PAR)
 
-def dato_actual_ponderado(moneda1, moneda2="USDT", size=5):
-    data = dato_actual_download(moneda1, moneda2, size=size)
+def dato_actual_ponderado(moneda1, moneda2="USDT", profundidad=5):
+    data = dato_actual_download(moneda1, moneda2, size=profundidad)
 
     sum_ask = 0
     volume_ask = 0
@@ -113,15 +113,15 @@ def dato_actual_ponderado(moneda1, moneda2="USDT", size=5):
     ask = data['asks']
     bid = data['bids']
 
-    for i in range(size):
-        if len(ask) >= size:
+    for i in range(profundidad):
+        if len(ask) >= profundidad:
             price = float(ask[i][0])
             volume = float(ask[i][1])
 
             sum_ask += price * volume
             volume_ask += volume
 
-        if len(bid) >= size:
+        if len(bid) >= profundidad:
             price = float(bid[i][0])
             volume = float(bid[i][1])
 
