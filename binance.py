@@ -151,6 +151,63 @@ def dato_actual(moneda1='BTC', moneda2='USDT'):
     bid_PAR=js.get('bids')[0][0]
     return (ask_PAR,bid_PAR)
 
+def dato_actual_download(moneda1='BTC', moneda2='USDT', depth= None):
+    '''dato_actual_download(moneda1='BTC', moneda2='USDT', depth= 10)'''
+
+    params = {}
+    
+    #Creo la variable Symbol
+    symbol=moneda1+moneda2
+    params['symbol']=symbol
+
+    # No existe el parametro size en Binance.
+    if depth:
+        params['limit'] = depth
+
+    url = 'https://api.binance.com/api/v3/depth'
+#    params = {'symbol':symbol,'limit':depth}
+    r = requests.get(url, params=params)
+    js = r.json()
+    
+    return js
+
+#Prueba dato_actual_download
+#print(dato_actual_download(moneda1='BTC', moneda2='USDT', depth= 10))
+
+def dato_actual_ponderado(moneda1='BTC', moneda2="USDT", profundidad=5):
+    data = dato_actual_download(moneda1, moneda2, depth=profundidad)
+
+    sum_ask = 0
+    volume_ask = 0
+    sum_bid = 0
+    volume_bid = 0
+
+    ask = data['asks']
+    bid = data['bids']
+
+    for i in range(profundidad):
+        if len(ask) >= profundidad:
+            price = float(ask[i][0])
+            volume = float(ask[i][1])
+
+            sum_ask += price * volume
+            volume_ask += volume
+
+        if len(bid) >= profundidad:
+            price = float(bid[i][0])
+            volume = float(bid[i][1])
+
+            sum_bid += price * volume
+            volume_bid += volume
+
+    ppp_ask = sum_ask / volume_ask if volume_ask > 0 else None
+    ppp_bid = sum_bid / volume_bid if volume_bid > 0 else None
+
+    return (ppp_ask, volume_ask, ppp_bid, volume_bid)
+
+#Prueba dato_actual_ponderado
+#print(dato_actual_ponderado(moneda1='BTC', moneda2="USDT", profundidad=5))
+
 
 def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datetime', hasta='datetime',broker='binance'):
     #En caso de no tener fecha de Fin, utilizo el dia actual.
