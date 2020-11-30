@@ -1,0 +1,1 @@
+BD_CONNECTION = 'mysql+pymysql://root:@localhost/crypto-hedge'
