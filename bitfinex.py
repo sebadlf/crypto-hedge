@@ -6,6 +6,7 @@ RATE LIMIT
 ----------
 - Market Data 30 req/min
 - Trading 60 req/min
+- Book 90 req/min
 
 @author: nicopacheco121
 """
@@ -19,6 +20,7 @@ import time
 import logging
 import config
 import db
+
 
 def guardoDB(data,ticker,broker='bitfinex'):
 
@@ -110,7 +112,6 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='vacio',
             finished=True
 
         # Armo el dataframe
-
         df = pd.DataFrame(js)
 
         # Verifico que traigo mas de una fila y es algo nuevo, si no, le doy break
@@ -195,15 +196,59 @@ def dato_actual(moneda1='BTC', moneda2='USD'):
     except:
         symbol='t'+moneda1+moneda2
 
-    print(moneda1)
-
     url = f'https://api-pub.bitfinex.com/v2/ticker/{symbol}'
     r = requests.get(url)
     js = r.json()
-    #print(js)
+
     ask_PAR=js[2]
     bid_PAR=js[0]
     return (ask_PAR,bid_PAR)
+
+
+def dato_actual_ponderado(moneda1, moneda2="USDT",profundidad = 5, precision='R0',len = 25):
+    """ Ratelimit: 90 req/min """
+
+    # Creo la variable Symbol
+    if moneda2 == "USDT":
+        moneda2 = "USD"
+    if moneda1 == 'BCH':
+        moneda1_ok = 'BCHN:'
+    try:
+        symbol = 't' + moneda1_ok + moneda2
+    except:
+        symbol = 't' + moneda1 + moneda2
+
+    # Requests
+    url = f'https://api-pub.bitfinex.com/v2/book/{symbol}/{precision}'
+    params = {'len': len}
+    r = requests.get(url,params=params)
+    js = r.json()
+
+    prod_bid_vol = 0
+    vol_bid = 0
+    prod_ask_vol = 0
+    vol_ask = 0
+
+    for i in range(len*2):
+        price = js[i][1]
+        volume = js[i][2]
+
+        #primero los bid
+        if i < profundidad:
+            if volume >0:
+                prod_bid_vol+=price*volume
+                vol_bid+=volume
+
+        #despues los ask
+        if i >24 and i<=(24+profundidad):
+            if volume <0:
+                prod_ask_vol += price * -volume
+                vol_ask += -volume
+
+    ppp_bid = prod_bid_vol / vol_bid if vol_bid > 0 else None
+    ppp_ask = prod_ask_vol / vol_ask if vol_ask > 0 else None
+
+    return (ppp_ask, vol_ask, ppp_bid, vol_bid)
 
 
 
@@ -212,7 +257,4 @@ def dato_actual(moneda1='BTC', moneda2='USD'):
 #for ticker in config.TICKERS:
 #    guardado_historico(moneda1=ticker)
 
-
-
-print(dato_actual("BCH","USDT"))
-
+#print(dato_actual_ponderado("BTC","USDT"))
