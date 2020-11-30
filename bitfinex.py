@@ -45,7 +45,7 @@ def guardoDB(data,ticker,broker='bitfinex'):
     data.to_sql(con=db_connection, name=broker, if_exists='append')
 
 
-def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetime', hasta='vacio',
+def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='vacio', hasta='vacio',
                    limit=10000, section = 'hist'):
     ''' desde=('2020-11-05') #YYYY-MM-DD
         hasta=('2020-11-09') # No es inclusive. si no se coloca nada, lo hace hasta el momento actual
@@ -59,7 +59,13 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetim
     #Creo la variable Symbol
     if moneda2 == "USDT":
         moneda2 = "USD"
-    symbol='t'+moneda1+moneda2
+    if moneda1 == 'BCH':
+        moneda1_ok = 'BCHN:'
+
+    try:
+        symbol='t'+moneda1_ok+moneda2
+    except:
+        symbol='t'+moneda1+moneda2
 
     # Presumo que las fechas son UTC0
     if hasta == 'vacio':
@@ -69,9 +75,7 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetim
         #hasta = datetime.fromisoformat(hasta)
         hasta = hasta.replace(tzinfo=pytz.utc)+timedelta(days=1)
 
-
-    #desde = datetime.fromisoformat(desde)
-    desde = desde.replace(tzinfo=pytz.utc)
+    desde = desde.replace(tzinfo=pytz.utc) #ESTABA SOLO EESO
 
     # Llevo las variables Datetime a ms
     startTime = int(desde.timestamp() * 1000)
@@ -142,13 +146,11 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='datetim
     # Le mando indice de time
     df_acum.set_index('time',inplace=True)
 
-    #df_acum.to_sql(con=db_connection, name='bitfinex', if_exists='append')
-
-
     return df_acum
 
 
-def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datetime', hasta='datetime',
+def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',
+                       desde=datetime.utcnow() - timedelta(weeks=13), hasta=datetime.utcnow(),
                        broker='bitfinex'):
 
     start_time = time.time()
@@ -185,14 +187,20 @@ def dato_actual(moneda1='BTC', moneda2='USD'):
     #Creo la variable Symbol
     if moneda2 == "USDT":
         moneda2 = "USD"
-    symbol='t'+moneda1+moneda2
+    if moneda1 == 'BCH':
+        moneda1_ok = 'BCHN:'
+
+    try:
+        symbol='t'+moneda1_ok+moneda2
+    except:
+        symbol='t'+moneda1+moneda2
+
+    print(moneda1)
 
     url = f'https://api-pub.bitfinex.com/v2/ticker/{symbol}'
-    params = {'simbol':symbol}
-    #r = requests.get(url,params=params)
     r = requests.get(url)
     js = r.json()
-    print(js)
+    #print(js)
     ask_PAR=js[2]
     bid_PAR=js[0]
     return (ask_PAR,bid_PAR)
@@ -201,12 +209,10 @@ def dato_actual(moneda1='BTC', moneda2='USD'):
 
 """ / / / EJECUTAR LA FUNCION / / / """
 
-desde = datetime.utcnow() - timedelta(weeks=13)
-hasta = datetime.utcnow()
+#for ticker in config.TICKERS:
+#    guardado_historico(moneda1=ticker)
 
-for ticker in config.TICKERS:
-#for ticker in tickers:
-    guardado_historico(moneda1=ticker,desde=desde,hasta=hasta)
 
-#print(dato_actual("BTC","USDT"))
+
+print(dato_actual("BCH","USDT"))
 
