@@ -19,14 +19,14 @@ from  keys import *
 from datetime import datetime, timedelta
 import time
 import logging
-import db
+import db_seba
 import okex_utils
 import config
 
 
 def GuardoDB(data,ticker,broker='hitbtc'):
     # conexion a la DB
-    db_connection = create_engine(db.BD_CONNECTION)
+    db_connection = create_engine(db_seba.BD_CONNECTION)
     conn = db_connection.connect()
 
     # creo la tabla
@@ -167,7 +167,7 @@ def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datet
     
     try:
         # conexion a la DB
-        db_connection = create_engine(db.BD_CONNECTION)
+        db_connection = create_engine(db_seba.BD_CONNECTION)
         conn = db_connection.connect()
     
         #Busco el ultimo dato guardado.

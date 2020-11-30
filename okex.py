@@ -1,4 +1,4 @@
-from db import BD_CONNECTION
+from db_seba import BD_CONNECTION
 from sqlalchemy import create_engine
 from okex_utils import crear_tabla, dato_historico
 from config import FIRST_ROW_DATE

@@ -1,5 +1,5 @@
 import threading
-from db import BD_CONNECTION
+from db_seba import BD_CONNECTION
 from sqlalchemy import create_engine
 import datetime as dt
 
