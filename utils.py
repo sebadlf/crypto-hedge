@@ -12,3 +12,6 @@ def get_last_row(conn, table_name, ticker):
 def delete_last_row(conn, table_name, id):
     query_borrado = f'DELETE FROM {table_name} WHERE `id`={id}'
     return conn.execute(query_borrado)
+
+
+#def create

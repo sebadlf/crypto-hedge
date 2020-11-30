@@ -32,13 +32,17 @@ def dato_historico(moneda1, moneda2, desde, hasta=None, timeframe="1m"):
 
         partial_df = dato_historico_download(moneda1, moneda2, desde, hasta_param, granularity)
 
-        result.append(partial_df)
+        if len(partial_df):
+            result.append(partial_df)
 
         desde = desde + time_window
 
         finish = finish or (desde >= hasta) or (desde >= datetime.utcnow())
 
-    df = pd.concat(result)
+    df = None
+
+    if len(result):
+        df = pd.concat(result)
 
     return df
 
@@ -50,11 +54,11 @@ def dato_historico_download(moneda1, moneda2, desde=None, hasta=None, granularit
         'granularity': granularity
     }
 
-    if desde:
-        params['end'] = desde.strftime('%Y-%m-%dT%H:%M:%S.000Z')
-
     if hasta:
         params['start'] = hasta.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+
+    if desde:
+        params['end'] = desde.strftime('%Y-%m-%dT%H:%M:%S.000Z')
 
     print(params)
 
@@ -62,30 +66,30 @@ def dato_historico_download(moneda1, moneda2, desde=None, hasta=None, granularit
     js = r.json()
     df = pd.DataFrame(js)
 
-    df.columns = ['time', 'open', 'high', 'low', 'close', 'volume']
+    if len(df):
+        df.columns = ['time', 'open', 'high', 'low', 'close', 'volume']
 
-    df.time = pd.to_datetime(df.time)
-    df.open = df.open.astype(float)
-    df.high = df.high.astype(float)
-    df.low = df.low.astype(float)
-    df.close = df.close.astype(float)
-    df.volume = df.volume.astype(float)
+        df.time = pd.to_datetime(df.time)
+        df.open = df.open.astype(float)
+        df.high = df.high.astype(float)
+        df.low = df.low.astype(float)
+        df.close = df.close.astype(float)
+        df.volume = df.volume.astype(float)
 
-    df['ticker'] = moneda1
+        df['ticker'] = moneda1
 
-    df.set_index('time', inplace=True)
-    df.sort_index(inplace=True)
+        df.set_index('time', inplace=True)
+        df.sort_index(inplace=True)
 
     return df
 
 def dato_actual(moneda1, moneda2="USDT"):
     data = dato_actual_download(moneda1, moneda2, size=1)
 
-    ask = float(data['asks'][0][1]) if len(data['asks']) else None
-    bid = float(data['bids'][0][1]) if len(data['bids']) else None
+    ask = float(data['asks'][0][0]) if len(data['asks']) else None
+    bid = float(data['bids'][0][0]) if len(data['bids']) else None
 
     return (ask, bid)
-
 
 def dato_actual_download(moneda1, moneda2="USDT", size = None, depth= None):
     url = f'https://okex.com/api/spot/v3/instruments/{moneda1}-{moneda2}/book'
@@ -103,6 +107,36 @@ def dato_actual_download(moneda1, moneda2="USDT", size = None, depth= None):
 
     return js # TUPLA(ask_PAR, bid_PAR)
 
+def dato_actual_ponderado(moneda1, moneda2="USDT", profundidad=5):
+    data = dato_actual_download(moneda1, moneda2, size=profundidad)
+
+    sum_ask = 0
+    volume_ask = 0
+    sum_bid = 0
+    volume_bid = 0
+
+    ask = data['asks']
+    bid = data['bids']
+
+    for i in range(profundidad):
+        if len(ask) >= profundidad:
+            price = float(ask[i][0])
+            volume = float(ask[i][1])
+
+            sum_ask += price * volume
+            volume_ask += volume
+
+        if len(bid) >= profundidad:
+            price = float(bid[i][0])
+            volume = float(bid[i][1])
+
+            sum_bid += price * volume
+            volume_bid += volume
+
+    ppp_ask = sum_ask / volume_ask if volume_ask > 0 else None
+    ppp_bid = sum_bid / volume_bid if volume_bid > 0 else None
+
+    return (ppp_ask, volume_ask, ppp_bid, volume_bid)
 
 # Test dato_historico
 
