@@ -32,13 +32,17 @@ def dato_historico(moneda1, moneda2, desde, hasta=None, timeframe="1m"):
 
         partial_df = dato_historico_download(moneda1, moneda2, desde, hasta_param, granularity)
 
-        result.append(partial_df)
+        if len(partial_df):
+            result.append(partial_df)
 
         desde = desde + time_window
 
         finish = finish or (desde >= hasta) or (desde >= datetime.utcnow())
 
-    df = pd.concat(result)
+    df = None
+
+    if len(result):
+        df = pd.concat(result)
 
     return df
 
@@ -50,11 +54,11 @@ def dato_historico_download(moneda1, moneda2, desde=None, hasta=None, granularit
         'granularity': granularity
     }
 
-    if desde:
-        params['end'] = desde.strftime('%Y-%m-%dT%H:%M:%S.000Z')
-
     if hasta:
         params['start'] = hasta.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+
+    if desde:
+        params['end'] = desde.strftime('%Y-%m-%dT%H:%M:%S.000Z')
 
     print(params)
 
@@ -62,19 +66,20 @@ def dato_historico_download(moneda1, moneda2, desde=None, hasta=None, granularit
     js = r.json()
     df = pd.DataFrame(js)
 
-    df.columns = ['time', 'open', 'high', 'low', 'close', 'volume']
+    if len(df):
+        df.columns = ['time', 'open', 'high', 'low', 'close', 'volume']
 
-    df.time = pd.to_datetime(df.time)
-    df.open = df.open.astype(float)
-    df.high = df.high.astype(float)
-    df.low = df.low.astype(float)
-    df.close = df.close.astype(float)
-    df.volume = df.volume.astype(float)
+        df.time = pd.to_datetime(df.time)
+        df.open = df.open.astype(float)
+        df.high = df.high.astype(float)
+        df.low = df.low.astype(float)
+        df.close = df.close.astype(float)
+        df.volume = df.volume.astype(float)
 
-    df['ticker'] = moneda1
+        df['ticker'] = moneda1
 
-    df.set_index('time', inplace=True)
-    df.sort_index(inplace=True)
+        df.set_index('time', inplace=True)
+        df.sort_index(inplace=True)
 
     return df
 
