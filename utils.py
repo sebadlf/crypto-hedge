@@ -18,36 +18,37 @@ def delete_last_row(conn, table_name, id):
 def create_current_price_table(db_connection):
 
     create_table = f'''
-    CREATE TABLE IF NOT EXISTS `current_price` (
+    CREATE TABLE if not exists `current_price` (
       `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
       `ticker` varchar(20) NOT NULL,
       `broker` varchar(20) NOT NULL,
       `time` datetime NOT NULL,
       `time_raw` datetime NOT NULL,
-      `ask_sum` float NOT NULL,
+      `ask_ppp` float NOT NULL,
       `ask_volume` float NOT NULL,
-      `bid_sum` float DEFAULT NULL,
+      `bid_ppp` float DEFAULT NULL,
       `bid_volume` float DEFAULT NULL,
-      PRIMARY KEY (`id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+      PRIMARY KEY (`id`),
+      KEY `idx_ticker_broker_time` (`ticker`,`broker`,`time`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=14953 DEFAULT CHARSET=latin1;
     '''
 
     db_connection.execute(create_table)
 
 def insert_current_price(db_connection, data):
-    time = data['time']
-    raw_time = time.replace(second=0, microsecond=0)
+    raw_time = data['time']
+    time = raw_time.replace(second=0, microsecond=0)
 
     query = f'''
-        insert current_price(ticker, broker, time, time_raw, ask_sum, ask_volume, bid_sum, bid_volume)
+        insert current_price(ticker, broker, time, time_raw, ask_ppp, ask_volume, bid_ppp, bid_volume)
         values (
             '{data['ticker']}',
             '{data['broker']}',
-            '{ time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3] }',
+            '{time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3] }',
             '{raw_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}',
-            {data['ask_sum']},
-            {data['ask_sum']},
-            {data['bid_sum']},
+            {data['ask_ppp']},
+            {data['ask_volume']},
+            {data['bid_ppp']},
             {data['bid_volume']}
         )
     '''

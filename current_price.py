@@ -5,6 +5,9 @@ import datetime as dt
 
 from okex_utils import dato_actual_ponderado as dato_okex
 from binance import dato_actual_ponderado as dato_binance
+from bitfinex import dato_actual_ponderado as dato_bitfinex
+
+
 
 from utils import create_current_price_table, insert_current_price
 
@@ -24,9 +27,13 @@ BROKERS = [{
     {
     'name': 'binance',
     'dato_actual': dato_binance
+},
+    {
+    'name': 'bitfinex',
+    'dato_actual': dato_bitfinex
 }]
 
-def worker(ticker, broker):
+def worker(ticker, broker, time):
     dato_actual = broker['dato_actual']
 
     try:
@@ -35,10 +42,10 @@ def worker(ticker, broker):
         data = {
             'ticker': ticker,
             'broker': broker['name'],
-            'time': dt.datetime.utcnow(),
-            'ask_sum': value[0],
+            'time': time,
+            'ask_ppp': value[0],
             'ask_volume': value[1],
-            'bid_sum': value[2],
+            'bid_ppp': value[2],
             'bid_volume': value[3]
 
         }
@@ -50,17 +57,20 @@ def worker(ticker, broker):
 
 while True:
 
-    threads = []
     for ticker in TICKERS:
+        threads = []
+
+        time = dt.datetime.utcnow()
 
         for broker in BROKERS:
-            t = threading.Thread(target=worker, args=(ticker, broker))
+
+            t = threading.Thread(target=worker, args=(ticker, broker, time))
 
             threads.append(t)
             t.start()
 
-    for t in threads:
-        t.join()
+        for t in threads:
+            t.join()
 
 print(dt.datetime.now() - start)
 
