@@ -1,5 +1,5 @@
 import threading
-from db_seba import BD_CONNECTION
+from db import BD_CONNECTION
 from sqlalchemy import create_engine
 import datetime as dt
 
@@ -9,7 +9,7 @@ from bitfinex import dato_actual_ponderado as dato_bitfinex
 
 
 
-from utils import create_current_price_table, insert_current_price
+from utils import create_current_price_table, create_difference_table, insert_current_price, insert_difference
 
 
 from config import TICKERS
@@ -17,6 +17,7 @@ from config import TICKERS
 db_connection = create_engine(BD_CONNECTION)
 
 create_current_price_table(db_connection)
+create_difference_table(db_connection)
 
 start = dt.datetime.now()
 
@@ -47,20 +48,18 @@ def worker(ticker, broker, time):
             'ask_volume': value[1],
             'bid_ppp': value[2],
             'bid_volume': value[3]
-
         }
 
         insert_current_price(db_connection, data)
 
     except:
-        print(f'Error en {broker["name"]} - {ticker}')
+        print(f'Error en {broker["name"]} - {ticker} {dt.datetime.now()}')
 
 while True:
+    time = dt.datetime.utcnow()
 
     for ticker in TICKERS:
         threads = []
-
-        time = dt.datetime.utcnow()
 
         for broker in BROKERS:
 
@@ -69,8 +68,10 @@ while True:
             threads.append(t)
             t.start()
 
-        for t in threads:
-            t.join()
+    for t in threads:
+        t.join()
+        
+    insert_difference(db_connection)
 
 print(dt.datetime.now() - start)
 

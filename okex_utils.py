@@ -1,6 +1,6 @@
 import requests
 import pandas as pd
-from db_seba import BD_CONNECTION
+from db import BD_CONNECTION
 from sqlalchemy import create_engine
 engine = create_engine(BD_CONNECTION)
 from datetime import datetime, timedelta
