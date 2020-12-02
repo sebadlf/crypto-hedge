@@ -49,7 +49,7 @@ def create_difference_table(db_connection):
       `bid_ppp_2` float DEFAULT NULL,
       `ask_volume_1` float NOT NULL,
       `bid_volume_2` float DEFAULT NULL,
-      `difference` double DEFAULT NULL,
+      `difference` float DEFAULT NULL,
       PRIMARY KEY (`id`)
     ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
     '''
