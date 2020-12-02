@@ -51,7 +51,7 @@ def create_difference_table(db_connection):
       `bid_volume_2` float DEFAULT NULL,
       `difference` double DEFAULT NULL,
       PRIMARY KEY (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=latin1;
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
     '''
 
     db_connection.execute(create_table)
