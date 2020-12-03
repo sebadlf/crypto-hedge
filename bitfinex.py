@@ -77,7 +77,7 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='vacio',
         #hasta = datetime.fromisoformat(hasta)
         hasta = hasta.replace(tzinfo=pytz.utc)+timedelta(days=1)
 
-    desde = desde.replace(tzinfo=pytz.utc) #ESTABA SOLO EESO
+    desde = desde.replace(tzinfo=pytz.utc)
 
     # Llevo las variables Datetime a ms
     startTime = int(desde.timestamp() * 1000)
@@ -142,7 +142,10 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='vacio',
     df_acum = df_acum.drop_duplicates(['time'], keep='last')
 
     # Elimino las filas que me trajo extras en caso que existan
-    df_acum = df_acum[df_acum.time < endTime]
+    try:
+        df_acum = df_acum[df_acum.time < hasta]
+    except:
+        pass
 
     # Paso a timestamp el time
     df_acum['time'] = pd.to_datetime(df_acum.time, unit='ms')
