@@ -51,7 +51,9 @@ def GuardoDB(data,ticker,broker='hitbtc'):
     data.to_sql(con=db_connection, name=broker, if_exists='append')
     
 
-def dato_historico(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde= '2020-11-12', hasta='2020-11-15',limit='1000'):
+def dato_historico(moneda1='BTC', moneda2='USD', period='M1', sort='ASC',
+                   desde=datetime.utcnow() - timedelta(weeks=13),
+                   hasta=datetime.utcnow(),limit='1000'):
 
     """
     Inputs
@@ -64,7 +66,6 @@ def dato_historico(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde=
     logging.basicConfig(level=logging.INFO, format='{asctime} {levelname} ({threadName:11s}) {message}', style='{')
     print(f'Ticker {moneda1}')
 
-
     # Creo la variable Symbol
     if moneda2 == 'USDT' and moneda1 != 'XRP':
         moneda2 = 'USD'
@@ -72,10 +73,9 @@ def dato_historico(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde=
     symbol = moneda1 + moneda2
 
     # presumo que las fechas son UTC0
-    #desde = datetime.fromisoformat(desde)
-    #hasta = datetime.fromisoformat(hasta)
     desde = desde.replace(tzinfo=pytz.utc)
-    hasta = hasta.replace(tzinfo=pytz.utc)
+    hasta = datetime.strptime(datetime.strftime(hasta, '%Y-%m-%d %H:%M'), '%Y-%m-%d %H:%M')
+    hasta = hasta.replace(tzinfo=pytz.utc) + timedelta(days=1)
 
     # Inicializo el df acumulado
     df_acum = pd.DataFrame(columns=('timestamp', 'open', 'close', 'min', 'max', 'volume', 'volumeQuote'))
@@ -109,7 +109,10 @@ def dato_historico(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde=
 
         # Verifico que traigo mas de una fila y es algo nuevo, si no, le doy break
         if len(df) ==1:
-            if df.iloc[0][0] == df_acum.iloc[-1][0]:
+            try:
+                if df.iloc[0][0] == df_acum.iloc[-1][0]:
+                    break
+            except:
                 break
 
         df_acum = df_acum.append(df,sort=False)
@@ -153,8 +156,10 @@ def dato_historico(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde=
     df_acum['time'] = pd.to_datetime(df_acum.time)
 
     # Elimino las filas que me trajo extras en caso que existan
-    df_acum = df_acum[df_acum.time < hasta]
-
+    try:
+        df_acum = df_acum[df_acum.time < hasta]
+    except:
+        pass
     # Le mando indice de time
     df_acum.set_index('time',inplace=True)
 
@@ -163,12 +168,13 @@ def dato_historico(moneda1='BTC', moneda2='USD', period='M1', sort='ASC', desde=
     return df_acum
 
 
-def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datetime', hasta='datetime',broker='hitbtc'):
+def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='M1',desde=datetime.utcnow() - timedelta(weeks=13),
+                       hasta=datetime.utcnow(),broker='hitbtc'):
     
     try:
         # conexion a la DB
         db_connection = create_engine(db.BD_CONNECTION)
-        conn = db_connection.connect()
+        #conn = db_connection.connect()
     
         #Busco el ultimo dato guardado.
         busquedaUltimaFecha = f'SELECT `id`,`time` FROM {broker} WHERE `ticker` = "{moneda1}" ORDER BY `time` DESC limit 0,1'
@@ -180,9 +186,10 @@ def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datet
             query_borrado = f'DELETE FROM {broker} WHERE `id`={id}'
             db_connection.execute(query_borrado)
             desde=ultimaFecha[1]
+
     except:
         pass
-    
+
     #Bajo Informacion.
     data=dato_historico(moneda1=moneda1, moneda2=moneda2,period=timeframe,desde=desde,hasta=hasta)
     
@@ -193,9 +200,10 @@ def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datet
 
 def dato_actual(moneda1='BTC', moneda2='USD'):
     '''data=dato_actual(moneda1='BTC', moneda2='USDT')'''
-    #Creo la variable Symbol
-    if moneda2 == "USDT":
-        moneda2 = "USD"
+    # Creo la variable Symbol
+    if moneda2 == 'USDT' and moneda1 != 'XRP':
+        moneda2 = 'USD'
+
     symbol=moneda1+moneda2
 
     url = f'https://api.hitbtc.com/api/2/public/ticker/{symbol}'
@@ -206,25 +214,61 @@ def dato_actual(moneda1='BTC', moneda2='USD'):
     bid_PAR=js['bid']
     return (ask_PAR,bid_PAR)
 
-#print(dato_actual())
+
+def dato_actual_ponderado(moneda1, moneda2="USDT",profundidad = 5, precision='R0',len = 5):
+    """ Ratelimit: 100 requests per second for one IP """
+
+    # Creo la variable Symbol
+    if moneda2 == 'USDT' and moneda1 != 'XRP':
+        moneda2 = 'USD'
+
+    symbol = moneda1 + moneda2
+
+    # Requests
+    url = f'https://api.hitbtc.com/api/2/public/orderbook/{symbol}'
+    params = {'limit': len}
+    r = requests.get(url,params=params)
+    js = r.json()
+
+    prod_bid_vol = 0
+    vol_bid = 0
+    prod_ask_vol = 0
+    vol_ask = 0
+
+    for i in range(len):
+
+        precio_ask = float(js['ask'][i]['price'])
+        vol_ask_i = float(js['ask'][i]['size'])
+        precio_bid = float(js['bid'][i]['price'])
+        vol_bid_i = float(js['bid'][i]['size'])
+
+        if vol_ask_i >0:
+            vol_ask += vol_ask_i
+            prod_ask_vol += precio_ask * vol_ask_i
+        if vol_bid_i >0:
+            vol_bid += vol_bid_i
+            prod_bid_vol += precio_bid * vol_bid_i
+
+    ppp_bid = prod_bid_vol / vol_bid if vol_bid > 0 else None
+    ppp_ask = prod_ask_vol / vol_ask if vol_ask > 0 else None
+
+    print(js)
+
+    return (ppp_ask, vol_ask, ppp_bid, vol_bid)
 
 
 """ / / / EJECUTAR LA FUNCION / / / """
 
-desde = datetime.utcnow() - timedelta(weeks=13)
-hasta = datetime.utcnow()
 
+"""inicio = time.time()
+for ticker in config.TICKERS:
 
+   #dato_historico(moneda1=ticker,moneda2='USDT')
+   guardado_historico(moneda1=ticker,moneda2='USDT')
 
-# inicio = time.time()
-# for ticker in config.TICKERS:
-#
-#
-# #    dato_historico(moneda1=ticker,desde=desde,hasta=hasta,moneda2='USDT')
-#     guardado_historico(moneda1=ticker,desde=desde,hasta=hasta,moneda2='USDT')
-# print("--- %s seconds ---" % (time.time() - inicio))
+print("--- %s seconds ---" % (time.time() - inicio))"""
 
-print(dato_actual("BCH","USDT"))
+#print(dato_actual("BCH","USDT"))
 
 
 

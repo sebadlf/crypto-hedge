@@ -77,7 +77,7 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='vacio',
         #hasta = datetime.fromisoformat(hasta)
         hasta = hasta.replace(tzinfo=pytz.utc)+timedelta(days=1)
 
-    desde = desde.replace(tzinfo=pytz.utc) #ESTABA SOLO EESO
+    desde = desde.replace(tzinfo=pytz.utc)
 
     # Llevo las variables Datetime a ms
     startTime = int(desde.timestamp() * 1000)
@@ -116,7 +116,10 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='vacio',
 
         # Verifico que traigo mas de una fila y es algo nuevo, si no, le doy break
         if len(df) ==1:
-            if df.iloc[0][0] == df_acum.iloc[-1][0]:
+            try:
+                if df.iloc[0][0] == df_acum.iloc[-1][0]:
+                    break
+            except:
                 break
 
         df_acum = df_acum.append(df, sort=False)
@@ -139,7 +142,10 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='vacio',
     df_acum = df_acum.drop_duplicates(['time'], keep='last')
 
     # Elimino las filas que me trajo extras en caso que existan
-    df_acum = df_acum[df_acum.time < endTime]
+    try:
+        df_acum = df_acum[df_acum.time < hasta]
+    except:
+        pass
 
     # Paso a timestamp el time
     df_acum['time'] = pd.to_datetime(df_acum.time, unit='ms')
@@ -256,5 +262,6 @@ def dato_actual_ponderado(moneda1, moneda2="USDT",profundidad = 5, precision='R0
 
 #for ticker in config.TICKERS:
 #    guardado_historico(moneda1=ticker)
+#guardado_historico(moneda1='ETC')
 
 #print(dato_actual_ponderado("BTC","USDT"))
