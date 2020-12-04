@@ -252,7 +252,7 @@ def dato_actual_ponderado(moneda1, moneda2="USDT",profundidad = 5, precision='R0
     ppp_bid = prod_bid_vol / vol_bid if vol_bid > 0 else None
     ppp_ask = prod_ask_vol / vol_ask if vol_ask > 0 else None
 
-    print(js)
+    #print(js)
 
     return (ppp_ask, vol_ask, ppp_bid, vol_bid)
 
