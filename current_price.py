@@ -6,6 +6,7 @@ import datetime as dt
 from okex_utils import dato_actual_ponderado as dato_okex
 from binance import dato_actual_ponderado as dato_binance
 from bitfinex import dato_actual_ponderado as dato_bitfinex
+from hitbtc import dato_actual_ponderado as dato_hitbtc
 
 
 
@@ -32,6 +33,10 @@ BROKERS = [{
     {
     'name': 'bitfinex',
     'dato_actual': dato_bitfinex
+},
+    {
+    'name': 'hitbtc',
+    'dato_actual': dato_hitbtc
 }]
 
 def worker(ticker, broker, time):
