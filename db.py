@@ -1,1 +1,1 @@
-BD_CONNECTION = 'mysql+pymysql://root:password@localhost:8083/crypto-hedge'
+BD_CONNECTION = 'mysql+pymysql://root:@localhost/crypto-hedge'
