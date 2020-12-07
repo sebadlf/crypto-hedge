@@ -20,7 +20,9 @@ import time
 import logging
 import config
 import db
-
+from requests.auth import HTTPBasicAuth
+import hashlib
+import json
 
 def guardoDB(data,ticker,broker='bitfinex'):
 
@@ -265,3 +267,21 @@ def dato_actual_ponderado(moneda1, moneda2="USDT",profundidad = 5, precision='R0
 #guardado_historico(moneda1='ETC')
 
 #print(dato_actual_ponderado("BTC","USDT"))
+
+
+'''https://docs.bitfinex.com/docs/rest-auth'''
+def estado_cuenta():
+
+    apiKey=BITFINEX_KEY
+    apiSecret=BITFINEX_SECRET
+    url='https://api.bitfinex.com/v2/auth/r/summary'
+    data = {}
+    nonce=str(datetime.now().timestamp()*1000)
+    sig=str(hashlib.sha384(str(apiSecret).encode('utf-8')))
+    headers = {'Content-Type': 'application/json','bfx-nonce': nonce,
+               'bfx-apikey': apiKey,'bfx-signature': sig}
+    r = requests.post(url, data=json.dumps(data), headers=headers).json()
+            
+    print(r)
+# No esta funcionando, se lo pregunte a nacho
+#estado_cuenta()
