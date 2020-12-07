@@ -22,6 +22,7 @@ import logging
 import db
 import okex_utils
 import config
+from requests.auth import HTTPBasicAuth
 
 
 def GuardoDB(data,ticker,broker='hitbtc'):
@@ -287,3 +288,18 @@ def symbols():
 """hola = symbols()
 agrupado = hola.groupby("quoteCurrency").count()
 print(agrupado)"""
+
+'''antes de poder usar esta funcion, debemos tener
+autorizados en https://hitbtc.com/settings/api-keys  los derechos de acceso.
+CUIDADO, antes de poder usarlo, tambien hay que verificar en el correo, pq
+te mandan un mail para confirmar.
+dentro del archivo keys.py, debemos agrear las dos variables HITBTC_KEY y
+HITBTC_SECRET'''
+
+def estado_cuenta():
+    url='https://api.hitbtc.com/api/2/account/balance'
+    r=requests.get(url, auth=HTTPBasicAuth(HITBTC_KEY,HITBTC_SECRET)).json()
+    
+    print(r)
+
+loggin()
