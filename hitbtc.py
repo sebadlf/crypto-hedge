@@ -298,8 +298,7 @@ HITBTC_SECRET'''
 
 def estado_cuenta():
     url='https://api.hitbtc.com/api/2/account/balance'
-    r=requests.get(url, auth=HTTPBasicAuth(HITBTC_KEY,HITBTC_SECRET)).json()
-    
+    r=requests.get(url, auth=HTTPBasicAuth(HITBTC_KEY,HITBTC_SECRET)).json()  
     print(r)
 
 #estado_cuenta()
