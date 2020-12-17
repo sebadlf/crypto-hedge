@@ -242,7 +242,7 @@ def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',desde='datet
     data=dato_historico(moneda1=moneda1, moneda2=moneda2,timeframe=timeframe,desde=desde,hasta=hasta)
     
     #Guardo en DB
-    GuardoDB(data,moneda1)
+    GuardoDB(data,moneda1,broker=broker)
             
     
    
