@@ -100,8 +100,6 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde=datetime
         except:
             ultimaFecha = startTime
 
-        print(ultimaFecha)
-        print(endTime)
 
         if (ultimaFecha >= endTime):
             break
