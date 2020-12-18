@@ -49,7 +49,8 @@ def guardoDB(data,ticker,broker='bitfinex'):
     data.to_sql(con=db_connection, name=broker, if_exists='append')
 
 
-def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='vacio', hasta='vacio',
+def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde=datetime.utcnow() - timedelta(weeks=24),
+                   hasta='vacio',
                    limit=10000, section = 'hist'):
     ''' desde=('2020-11-05') #YYYY-MM-DD
         hasta=('2020-11-09') # No es inclusive. si no se coloca nada, lo hace hasta el momento actual
@@ -74,10 +75,10 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='vacio',
     # Presumo que las fechas son UTC0
     if hasta == 'vacio':
         hasta = datetime.now()
-        hasta = hasta.replace(tzinfo=pytz.utc)+timedelta(days=1)
+        hasta = hasta.replace(tzinfo=pytz.utc)+timedelta(minutes=1)
     else:
         #hasta = datetime.fromisoformat(hasta)
-        hasta = hasta.replace(tzinfo=pytz.utc)+timedelta(days=1)
+        hasta = hasta.replace(tzinfo=pytz.utc)+timedelta(minutes=1)
 
     desde = desde.replace(tzinfo=pytz.utc)
 
@@ -99,12 +100,15 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='vacio',
         except:
             ultimaFecha = startTime
 
+        print(ultimaFecha)
+        print(endTime)
+
         if (ultimaFecha >= endTime):
             break
 
         # Inicio Bajada
         logging.info(f'Bajada n° {contador}')
-        params = {'limit': limit, 'start': ultimaFecha, 'end' : hasta, 'sort': '1'}
+        params = {'limit': limit, 'start': ultimaFecha, 'end' : endTime, 'sort': '1'}
 
         r = requests.get(url, params=params)
         js = r.json()
@@ -159,7 +163,7 @@ def dato_historico(moneda1='BTC', moneda2='USDT', timeframe='1m', desde='vacio',
 
 
 def guardado_historico(moneda1='BTC', moneda2='USDT',timeframe='1m',
-                       desde=datetime.utcnow() - timedelta(weeks=13), hasta=datetime.utcnow(),
+                       desde=datetime.utcnow() - timedelta(weeks=24), hasta=datetime.utcnow(),
                        broker='bitfinex'):
 
     start_time = time.time()
@@ -285,3 +289,11 @@ def estado_cuenta():
     print(r)
 # No esta funcionando, se lo pregunte a nacho
 #estado_cuenta()
+
+if __name__ == '__main__':
+    inicio = time.time()
+
+    hola = dato_historico('BTC')
+    print(hola)
+
+    print("--- %s seconds ---" % (time.time() - inicio))

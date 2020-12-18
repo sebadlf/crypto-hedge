@@ -54,7 +54,6 @@ def account_snapshot(key,secret):
     return js
 
 
-
 if __name__ == '__main__':
     data_cuenta = account_snapshot(key= keys.BINANCE_CLAVE_API, secret=keys.BINANCE_CLAVE_SECRETA)
     print(data_cuenta)
